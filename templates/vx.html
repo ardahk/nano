@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Vx(t) Graph</title>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body         { font-family: Arial, sans-serif; margin: 20px; }
+    .input-field { margin-bottom: 10px; }
+    label        { display:inline-block; width:120px; }
+    input        { width:100px; }
+    button       { padding:5px 10px; }
+    nav          { margin-top:30px; background:#f2f2f2; padding:10px 14px;
+                   border-radius:8px; }
+    nav a        { margin-right:18px; color:#333; text-decoration:none;
+                   font-weight:bold; }
+    nav a:hover  { text-decoration:underline; }
+  </style>
+</head>
+<body>
+
+<h1>Table 1 – Vx(t) Graph</h1>
+
+<!-- inputs -->
+<div class="input-field"><label>Vmax (V):</label>
+  <input id="Vmax" type="number" step="any" value="1"></div>
+<div class="input-field"><label>Vmin (V):</label>
+  <input id="Vmin" type="number" step="any" value="-1"></div>
+<div class="input-field"><label>f (Hz):</label>
+  <input id="f"    type="number" step="any" value="0.25"></div>
+
+<button id="plot">Plot</button>
+
+<!-- chart -->
+<canvas id="vxChart" width="700" height="420"></canvas>
+
+<script>
+let chart;
+document.getElementById('plot').onclick = async () => {
+  const payload = {
+    Vmax: parseFloat(document.getElementById('Vmax').value),
+    Vmin: parseFloat(document.getElementById('Vmin').value),
+    f:    parseFloat(document.getElementById('f').value)
+  };
+  const res = await axios.post('/calculate_vx', payload);
+  const d   = res.data;
+
+  // Build / update the chart
+  const ctx = document.getElementById('vxChart').getContext('2d');
+  const data = {
+    labels: d.t,
+    datasets: [{
+      label: 'Vx(t)',
+      data: d.vx,
+      tension: 0,          // straight lines
+      fill: false,
+      borderWidth: 2,
+      pointRadius: 4
+    }]
+  };
+  if (chart) { chart.destroy(); }
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: data,
+    options: {
+      scales: {
+        x: { title: { display: true, text: 't (s)' } },
+        y: { title: { display: true, text: 'Vx (V)' } }
+      }
+    }
+  });
+};
+</script>
+
+<!-- nav bar -->
+<nav>
+  <a href="/">Sheet 3 – CNT Capacitor</a>
+  <a href="/sheet1">Sheet 1 – RC Calc</a>
+  <a href="/vo_rf">Vo & Rf Explorer</a>
+  <a href="/vx">Vx(t) Graph</a>
+</nav>
+</body>
+</html>

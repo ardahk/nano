@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Vo &amp; Rf Explorer</title>
+<style>
+  body         { font-family: Arial, sans-serif; margin: 20px; }
+  .input-field { margin-bottom: 10px; }
+  label        { display:inline-block; width:200px; }
+  input        { width:120px; }
+  button       { padding:5px 10px; }
+  .result      { margin-top:20px; }
+  nav          { margin-top:30px; background:#f2f2f2; padding:10px 14px;
+                 border-radius:8px; }
+  nav a        { margin-right:18px; color:#333; text-decoration:none;
+                 font-weight:bold; }
+  nav a:hover  { text-decoration:underline; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+
+<h1>Value of Vo &amp; Rf</h1>
+
+<!-- ── inputs ── -->
+<div class="input-field"><label>f (Hz):</label>     <input id="f"    type="number" step="any" value="0.25"></div>
+<div class="input-field"><label>Vmax (V):</label>   <input id="Vmax" type="number" step="any" value="1"></div>
+<div class="input-field"><label>Vmin (V):</label>   <input id="Vmin" type="number" step="any" value="-1"></div>
+<div class="input-field"><label>R (Ω):</label>      <input id="R"    type="number" step="any" value="100"></div>
+<div class="input-field"><label>C (F):</label>      <input id="C"    type="number" step="any" value="0.0001"></div>
+<div class="input-field"><label>Rf (Ω):</label>     <input id="Rf"   type="number" step="any" value="1000"></div>
+<div class="input-field"><label>t (s):</label>      <input id="t"    type="number" step="any" value="2"></div>
+<div class="input-field"><label>Vref (V):</label>   <input id="Vref" type="number" step="any" value="1.65"></div>
+
+<button id="calc">Calculate</button>
+
+<!-- ── results ── -->
+<div id="out" class="result"></div>
+
+<script>
+document.getElementById('calc').onclick = async () => {
+  const p = id => parseFloat(document.getElementById(id).value);
+  const payload = { f:p('f'), Vmax:p('Vmax'), Vmin:p('Vmin'),
+                    R:p('R'), C:p('C'), Rf:p('Rf'), t:p('t'),
+                    Vref:p('Vref') };
+  try {
+    const r = await axios.post('/calculate_vo_rf', payload);
+    const d = r.data;
+    const html = `
+      <h2>Derived</h2>
+      <ul>
+        <li><b>Vpeak:</b> ${d.Vpeak}</li>
+        <li><b>X<sub>c</sub>:</b> ${d.Xc}</li>
+        <li><b>Z:</b> ${d.Z}</li>
+        <li><b>i<sub>peak</sub>:</b> ${d.i_peak}</li>
+      </ul>
+      <h2>Vo results</h2>
+      <ul>
+        <li><b>Down‑slope&nbsp;(−):</b>  
+            Vwork = ${d.down.Vwork} V, i = ${d.down.i},  
+            <span style="color:#00;">Vo = ${d.down.Vo}</span></li>
+        <li><b>Up‑slope&nbsp;(＋):</b>    
+            Vwork = ${d.up.Vwork} V, i = ${d.up.i},  
+            Vo = ${d.up.Vo}</li>
+      </ul>`;
+    document.getElementById('out').innerHTML = html;
+  } catch (e) {
+    document.getElementById('out').innerHTML =
+      `<p style="color:red;">Error – ${e.response ? e.response.data.error
+                                               : e.message}</p>`;
+  }
+};
+</script>
+
+<!-- nav bar -->
+<nav>
+  <a href="/">Sheet 3 – CNT Capacitor</a>
+  <a href="/sheet1">Sheet 1 – RC Calc</a>
+  <a href="/vo_rf">Vo & Rf Explorer</a>
+  <a href="/vx">Vx(t) Graph</a>
+</nav>
+</body>
+</html>

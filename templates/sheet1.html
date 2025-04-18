@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sheet 1 – RC Calculator</title>
+
+  <style>
+    body         { font-family: Arial, sans-serif; margin: 20px; }
+    .input-field { margin-bottom: 10px; }
+    label        { display:inline-block; width:250px; }
+    input        { width:200px; }
+    button       { padding:5px 10px; }
+    .result      { margin-top:20px; }
+
+    nav          { margin-top:30px; background:#f2f2f2; padding:10px 14px;
+                   border-radius:8px; }
+    nav a        { margin-right:18px; color:#333; text-decoration:none;
+                   font-weight:bold; }
+    nav a:hover  { text-decoration:underline; }
+  </style>
+
+  <!-- Axios for AJAX -->
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+  <h1>Sheet 1 – RC Calc</h1>
+
+  <!-- inputs -->
+  <div class="input-field">
+    <label for="f">f (Hz):</label>
+    <input type="number" id="f" value="0.25" step="any">
+  </div>
+  <div class="input-field">
+    <label for="C">C (F):</label>
+    <input type="number" id="C" value="0.000096" step="any">
+  </div>
+  <div class="input-field">
+    <label for="R">R (Ω):</label>
+    <input type="number" id="R" value="98" step="any">
+  </div>
+  <div class="input-field">
+    <label for="Vfix">Vfix (V):</label>
+    <input type="number" id="Vfix" value="1.65" step="any">
+  </div>
+  <div class="input-field">
+    <label for="Vin">Vin (V):</label>
+    <input type="number" id="Vin" value="0.3" step="any">
+  </div>
+  <div class="input-field">
+    <label for="Rf">Rf (Ω):</label>
+    <input type="number" id="Rf" value="10000" step="any">
+  </div>
+
+  <button id="calcBtn">Calculate</button>
+
+  <!-- results -->
+  <div id="result" class="result"></div>
+
+  <script>
+    document.getElementById('calcBtn').addEventListener('click', async () => {
+      const payload = {
+        f:   parseFloat(document.getElementById('f').value),
+        C:   parseFloat(document.getElementById('C').value),
+        R:   parseFloat(document.getElementById('R').value),
+        Vfix:parseFloat(document.getElementById('Vfix').value),
+        Vin: parseFloat(document.getElementById('Vin').value),
+        Rf:  parseFloat(document.getElementById('Rf').value)
+      };
+
+      try {
+        const res = await axios.post('/calculate_sheet1', payload);
+        const d   = res.data;
+        document.getElementById('result').innerHTML = `
+          <h2>Results</h2>
+          <ul>
+            <li><strong>Period T:</strong> ${d.T}</li>
+            <li><strong>2πfC:</strong> ${d.two_pi_f_C}</li>
+            <li><strong>X<sub>c</sub>:</strong> ${d.Xc}</li>
+            <li><strong>Z:</strong> ${d.Z}</li>
+            <li><strong>Current i:</strong> ${d.i}</li>
+            <li><strong>V<sub>work</sub>:</strong> ${d.Vwork}</li>
+            <li><strong>V<sub>out</sub>:</strong> ${d.Vout}</li>
+            <li><strong>V<sub>max</sub>:</strong> ${d.Vmax}</li>
+            <li><strong>V<sub>min</sub>:</strong> ${d.Vmin}</li>
+            <li><strong>Amplitude:</strong> ${d.amplitude}</li>
+          </ul>`;
+      } catch (err) {
+        document.getElementById('result').innerHTML =
+          `<p style="color:red;">Error: ${
+              err.response ? err.response.data.error : err.message
+          }</p>`;
+      }
+    });
+  </script>
+
+  <!-- nav bar -->
+  <nav>
+    <a href="/">Sheet 3 – CNT Capacitor</a>
+    <a href="/sheet1">Sheet 1 – RC Calc</a>
+    <a href="/vo_rf">Vo & Rf Explorer</a>
+    <a href="/vx">Vx(t) Graph</a>
+  </nav>
+</body>
+</html>
