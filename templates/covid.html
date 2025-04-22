@@ -40,11 +40,42 @@
   </div>
   <div class="input-field">
     <label for="C0">Bulk Concentration (mol/m³):</label>
-    <input type="number" id="C0" value="0.001" step="0.0001">
+    <input type="number" id="C0" value="10000" step="100">
   </div>
   <div class="input-field">
     <label for="freq">Frequency (Hz):</label>
     <input type="number" id="freq" value="100000" step="1000">
+  </div>
+
+  <div class="input-field">
+    <label for="freq2">Frequency&nbsp;Branch&nbsp;2&nbsp;(Hz):</label>
+    <input type="number" id="freq2" value="10000" step="100">
+  </div>
+
+  <!-- Advanced (geometry / gap) – you can leave defaults alone -->
+  <div class="input-field">
+    <label for="chip_L">Chip Length&nbsp;(m):</label>
+    <input type="number" id="chip_L" value="1e-3" step="1e-4">
+  </div>
+  <div class="input-field">
+    <label for="chip_W">Chip Width&nbsp;(m):</label>
+    <input type="number" id="chip_W" value="1e-3" step="1e-4">
+  </div>
+  <div class="input-field">
+    <label for="gap_d1">Gap&nbsp;d<sub>1</sub>&nbsp;(CH)&nbsp;(m):</label>
+    <input type="number" id="gap_d1" value="2e-8" step="1e-9">
+  </div>
+  <div class="input-field">
+    <label for="gap_d2">Gap&nbsp;d<sub>2</sub>&nbsp;(CH1)&nbsp;(m):</label>
+    <input type="number" id="gap_d2" value="2e-8" step="1e-9">
+  </div>
+  <div class="input-field">
+    <label for="er_DNA">DNA Permittivity (εr DNA):</label>
+    <input type="number" id="er_DNA" value="8" step="0.1">
+  </div>
+  <div class="input-field">
+    <label for="L_DNA">DNA Layer Thickness (m):</label>
+    <input type="number" id="L_DNA" value="2e-9" step="1e-10">
   </div>
   <div class="input-field">
     <label for="r_CNT">CNT Radius (m):</label>
@@ -64,26 +95,30 @@
     document.getElementById('calcBtn').addEventListener('click', async () => {
       const payload = {
         epsilon_r: parseFloat(document.getElementById('epsilon_r').value),
-        z: parseFloat(document.getElementById('z').value),
-        V_zeta: parseFloat(document.getElementById('V_zeta').value),
-        C0: parseFloat(document.getElementById('C0').value),
-        freq: parseFloat(document.getElementById('freq').value),
-        r_CNT: parseFloat(document.getElementById('r_CNT').value),
-        h_CNT: parseFloat(document.getElementById('h_CNT').value)
+        z:         parseFloat(document.getElementById('z').value),
+        V_zeta:    parseFloat(document.getElementById('V_zeta').value),
+        C0:        parseFloat(document.getElementById('C0').value),
+        freq:      parseFloat(document.getElementById('freq').value),
+        freq2:     parseFloat(document.getElementById('freq2').value),
+        r_CNT:     parseFloat(document.getElementById('r_CNT').value),
+        h_CNT:     parseFloat(document.getElementById('h_CNT').value),
+        chip_L:    parseFloat(document.getElementById('chip_L').value),
+        chip_W:    parseFloat(document.getElementById('chip_W').value),
+        gap_d1:    parseFloat(document.getElementById('gap_d1').value),
+        gap_d2:    parseFloat(document.getElementById('gap_d2').value),
+        er_DNA:    parseFloat(document.getElementById('er_DNA').value),
+        L_DNA:     parseFloat(document.getElementById('L_DNA').value),
       };
 
       try {
         const res = await axios.post('/calculate_covid', payload);
         const d = res.data;
+        const listItems = Object.entries(d)
+          .map(([key, val]) => `<li><strong>${key}:</strong> ${val}</li>`)
+          .join('');
         document.getElementById('result').innerHTML = `
           <h2>Results</h2>
-          <ul>
-            <li><strong>Debye Length (d_EDL):</strong> ${d["Debye Length (d_EDL) (m)"]} m</li>
-            <li><strong>C_EDL (Full Eq.):</strong> ${d["C_EDL (Full Eq.) (F)"]} F</li>
-            <li><strong>C_EDL (Parallel-Plate):</strong> ${d["C_EDL (Parallel-Plate) (F)"]} F</li>
-            <li><strong>Impedance (Z):</strong> ${d["Impedance (Z) (Ω)"]} Ω</li>
-            <li><strong>Current (i):</strong> ${d["Current (i) (A)"]} A</li>
-          </ul>`;
+          <ul>${listItems}</ul>`;
       } catch (err) {
         document.getElementById('result').innerHTML =
           `<p style="color:red;">Error: ${

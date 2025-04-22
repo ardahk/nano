@@ -202,61 +202,158 @@ def covid():
 
 @app.route("/calculate_covid", methods=["POST"])
 def calculate_covid():
-    """calculate covid risk assessment"""
+    """
+    implementation of the “COVID Detection Clean Sheet”.
+    All formulas come straight from the Excel.Only a handful of
+    inputs are required; everything else defaults to the sheet’s constants
+    but may be overridden by the front‑end
+    """
     data = request.get_json()
-    try:
-        # Get input parameters from frontend
-        epsilon_r = float(data.get("epsilon_r", 78.49))
-        z = float(data.get("z", 1))
-        V_zeta = float(data.get("V_zeta", 0.05))
-        C0 = float(data.get("C0", 0.001))
-        freq = float(data.get("freq", 100000))
-        # These two are usally fixed for a given sensor
-        r_CNT = float(data.get("r_CNT", 5e-9))
-        h_CNT = float(data.get("h_CNT", 1e-4))
 
-        # Constants
-        epsilon_0 = scipy.constants.epsilon_0  # F/m
-        e = scipy.constants.e                 # Elementary charge
-        k = scipy.constants.k                 # Boltzmann constant
-        T = 298.1                            # Temperature (K)
-        Na = scipy.constants.Avogadro        # Avogadro number
+    # inputs
+    epsilon_r = float(data.get("epsilon_r", 78.49))      # relative permittivity – cell B6
+    z         = float(data.get("z", 1))                  # ion valence           – cell B3
+    V_zeta    = float(data.get("V_zeta", 0.05))          # zeta potential (V)    – cell B10
+    # bulk concentration (mol m⁻³) – cell B5.  
+    # Excel sheet uses 10 mM, which is 10 000 mol m^-3 in SI units.
+    C0        = float(data.get("C0", 10000))
+    freq1     = float(data.get("freq", 100_000))         # Hz, branch 1          – cell B32
+    freq2     = float(data.get("freq2", 10_000))         # Hz, branch 2          – cell B44
 
-        # CNT parameters
-        A_CNT = 2 * math.pi * r_CNT * h_CNT  # Surface area of 1 CNT
+    # CNT geometry (may be overridden)
+    r_CNT     = float(data.get("r_CNT", 5e-9))           # radius  – cell B20
+    h_CNT     = float(data.get("h_CNT", 1e-4))           # height  – cell B21
 
-        # --- Calculations ---
-        # 1. Debye Length (d_EDL)
-        d_EDL = np.sqrt((epsilon_r * epsilon_0 * k * T) / (2 * (z * e)**2 * Na * C0))
+    # chip/platform size – defaults give the 1 mm × 1 mm used in the sheet
+    chip_L    = float(data.get("chip_L", 1e-3))          # m  – cell B23
+    chip_W    = float(data.get("chip_W", 1e-3))          # m  – cell B24
 
-        # 2. Double-layer capacitance (C_EDL)
-        term = np.sqrt(2 * (z * e)**2 * Na * C0 * epsilon_r * epsilon_0 / (k * T))
-        cosh_term = np.cosh((z * e * V_zeta) / (2 * k * T))
-        C_EDL = A_CNT * term * cosh_term  # Total capacitance (F)
+    #gap distances that set the Helmholtz capacitances CH and CH1
+    gap_d1    = float(data.get("gap_d1", 2e-8))          # m  = around 19.6 nm in the sheet
+    gap_d2    = float(data.get("gap_d2", 2e-8))          # m  (same for CH1)
 
-        # 3. Simplified parallel-plate C_EDL (for verification)
-        C_EDL_simple = (epsilon_r * epsilon_0 * A_CNT) / d_EDL
+    er_DNA = float(data.get("er_DNA", 8))     # cell B39
+    L_DNA  = float(data.get("L_DNA", 2e-9))   # cell B40
 
-        # 4. Impedance (Z)
-        denominator = 2 * np.pi * freq * C_EDL
-        if denominator == 0:
-            return jsonify({"error": "Division by zero: Impedance calculation failed. Check input parameters."}), 400
-        Z = 1 / denominator        
-        if Z == 0:
-            return jsonify({"error": "Division by zero: Current calculation failed. Check input parameters."}), 400
-        
-        # 5. Current (i)
-        i = V_zeta / Z
+    # constants 
+    eps0 = scipy.constants.epsilon_0
+    e_ch = scipy.constants.e
+    k_B  = scipy.constants.k
+    T    = 298.1                                           # K (room temp in sheet)
+    N_A  = scipy.constants.Avogadro
+    PI   = math.pi
 
-        return jsonify({
-            "Debye Length (d_EDL) (m)": f"{d_EDL:.2e}",
-            "C_EDL (Full Eq.) (F)": f"{C_EDL:.2e}",
-            "C_EDL (Parallel-Plate) (F)": f"{C_EDL_simple:.2e}",
-            "Impedance (Z) (Ω)": f"{Z:.2e}",
-            "Current (i) (A)": f"{i:.2e}"
-        })
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
+    #  derived CNT & sensor geometry 
+    SA_1_CNT = 2 * PI * r_CNT * h_CNT                      # cell B22
+    CNT_count = (chip_L * chip_W) / SA_1_CNT               # cell B25
+
+    # electro‑double‑layer 
+    # Debye length (cell B14)
+    d_EDL = math.sqrt(epsilon_r * eps0 * k_B * T / (2 * (z * e_ch) ** 2 * N_A * C0))
+
+    # C_EDL for one CNT (cell B13)
+    pre_factor = math.sqrt(2 * (z * e_ch) ** 2 * N_A * C0 * epsilon_r * eps0 / (k_B * T))
+    cosh_term = math.cosh((z * e_ch * V_zeta) / (2 * k_B * T))  # sheet col D12
+    CEDL_1_CNT = SA_1_CNT * pre_factor * cosh_term
+
+    # C_EDL for the entire sensor (cell B17)
+    CEDL_total = CEDL_1_CNT * CNT_count
+
+    # ───────────────────── Helmholtz double‐layer (CH) and DNA hybridization layer (CH1) ──────────────
+    CH_per_area  = eps0 * epsilon_r / gap_d1     # cell B? (original CH per area)
+    CH           = CH_per_area * SA_1_CNT * CNT_count
+    CH1_per_area = eps0 * er_DNA      / L_DNA    # cell F39‑F40 (DNA-layer cap)
+    CH1          = CH1_per_area * SA_1_CNT * CNT_count
+
+    #  Branch 1 (no CH1) 
+    inv_C1 = (1 / CH) + (1 / CEDL_total)                    # cell B30
+    C1     = 1 / inv_C1                                     # cell B31
+    Z1     = 1 / (2 * PI * freq1 * C1)                      # cell B33
+    I1     = V_zeta / Z1                                    # cell B35
+
+    #fixed‑resistor path (R = 100 kΩ) 
+    R_fixed = float(data.get("R_fixed", 1e5))             # cell E34 in sheet
+    Z_RC    = math.sqrt(R_fixed ** 2 + (1 / (2 * PI * freq1 * C1)) ** 2)
+    I_RC    = V_zeta / Z_RC                               # optional current through RC branch
+
+    # Branch 2 (with CH1) 
+    inv_C2 = (1 / CH) + (1 / CH1) + (1 / CEDL_total)        # cell B42
+    C2     = 1 / inv_C2                                     # cell B43
+    Z2     = 1 / (2 * PI * freq2 * C2)                      # cell B45
+    I2     = V_zeta / Z2                                    # cell B47
+
+    # Deltas – match sign convention in the Excel sheet
+    delta_I = abs(I1 - I2)          # cell B50  (unchanged magnitude)
+    delta_Z = Z1 - Z2               # cell B51  (negative because impedance rises when CH/CH1 are added)
+    delta_C = C1 - C2               # cell B52  (positive because total capacitance falls when CH/CH1 are added)
+
+    # extras to mirror every Excel field 
+    # Per‑unit‑area and per‑CNT capacitances
+    C_EDL_per_area = CEDL_1_CNT / SA_1_CNT                # cell B12 (F m^-2)
+    # CH_per_area and CH1_per_area updated above
+    CH_per_CNT     = CH  / CNT_count
+    CH1_per_CNT    = CH1 / CNT_count
+
+    # Inverse capacitances that appear explicitly on the sheet
+    inv_C1 = 1 / C1                                       # cell B30
+    inv_C2 = 1 / C2                                       # cell B42
+
+    # Fundamental constants shown on the sheet
+    F_eNA   = scipy.constants.e * N_A                     # Faraday constant (≈ 96485 C mol^-1)
+    R_kNa   = k_B * N_A                                   # Universal gas constant (≈ 8.314 J mol^-1 K^-1)
+
+    #  Response 
+    return jsonify({
+        # Geometry
+        "SA_1_CNT (m^2)":        f"{SA_1_CNT:.3e}",
+        "CNT_count":             f"{CNT_count:.3f}",
+
+        # Double‑layer
+        "Debye Length d_EDL (m)":f"{d_EDL:.3e}",
+        "C_EDL_one_CNT (F)":     f"{CEDL_1_CNT:.3e}",
+        "C_EDL_total (F)":       f"{CEDL_total:.3e}",
+
+        # Helmholtz caps
+        "CH (F)":                f"{CH:.3e}",
+        "CH1 (F)":               f"{CH1:.3e}",
+
+        # Sheet reference values
+        "C_EDL/A (F/m^2)":        f"{pre_factor:.3e}",   # cell B12
+        "cosh_term":              f"{cosh_term:.3e}",   # cell D12
+        "F = e·N_A (C/mol)":      f"{F_eNA:.3f}",       # cell B18
+        "R = k·N_A (J/mol·K)":    f"{R_kNa:.3f}",       # cell B19
+
+        "Z_CEDL_total (Ω)":       f"{(1 / (2 * PI * freq2 * CEDL_total)):.3e}",
+
+        # Per‑unit‑area/per‑CNT caps
+        "C_EDL_per_area (F/m^2)":     f"{C_EDL_per_area:.3e}",
+        "CH_per_area (F/m^2)":        f"{CH_per_area:.3e}",
+        "CH1_per_area (F/m^2)":       f"{CH1_per_area:.3e}",
+        "C_EDL_per_CNT (F)":          f"{CEDL_1_CNT:.3e}",   # alias for clarity
+        "CH_per_CNT (F)":             f"{CH_per_CNT:.3e}",
+        "CH1_per_CNT (F)":            f"{CH1_per_CNT:.3e}",
+
+        # Inverse caps
+        "1/C_branch1 (1/F)":          f"{inv_C1:.3e}",
+        "1/C_branch2 (1/F)":          f"{inv_C2:.3e}",
+
+        # Branch 1
+        "C_total_branch1 (F)":   f"{C1:.3e}",
+        "Z_branch1 (Ω)":         f"{Z1:.3e}",
+        "I_branch1 (A)":         f"{I1:.3e}",
+        "Z_RC (Ω)":               f"{Z_RC:.3e}",
+        "I_with_R (A)":           f"{I_RC:.3e}",
+
+        # Branch 2
+        "C_total_branch2 (F)":   f"{C2:.3e}",
+        "Z_branch2 (Ω)":         f"{Z2:.3e}",
+        "I_branch2 (A)":         f"{I2:.3e}",
+
+        # Differences
+        "ΔI (A)":                f"{delta_I:.3e}",
+        "ΔZ (Ω)":                f"{delta_Z:.3e}",
+        "ΔC (F)":                f"{delta_C:.3e}",
+    })
 
 if __name__ == "__main__":
     app.run(debug=True)
