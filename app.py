@@ -1,5 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 import math
+import scipy.constants
+import numpy as np
 
 app = Flask(__name__)
 
@@ -192,5 +194,69 @@ def calculate_vx():
 
     return jsonify({"t": t_vals, "vx": vx_vals,
                     "Vpeak": Vpeak, "f": f})
+
+@app.route("/covid")
+def covid():
+    """show covid detection page"""
+    return render_template("covid.html")
+
+@app.route("/calculate_covid", methods=["POST"])
+def calculate_covid():
+    """calculate covid risk assessment"""
+    data = request.get_json()
+    try:
+        # Get input parameters from frontend
+        epsilon_r = float(data.get("epsilon_r", 78.49))
+        z = float(data.get("z", 1))
+        V_zeta = float(data.get("V_zeta", 0.05))
+        C0 = float(data.get("C0", 0.001))
+        freq = float(data.get("freq", 100000))
+        # These two are usally fixed for a given sensor
+        r_CNT = float(data.get("r_CNT", 5e-9))
+        h_CNT = float(data.get("h_CNT", 1e-4))
+
+        # Constants
+        epsilon_0 = scipy.constants.epsilon_0  # F/m
+        e = scipy.constants.e                 # Elementary charge
+        k = scipy.constants.k                 # Boltzmann constant
+        T = 298.1                            # Temperature (K)
+        Na = scipy.constants.Avogadro        # Avogadro number
+
+        # CNT parameters
+        A_CNT = 2 * math.pi * r_CNT * h_CNT  # Surface area of 1 CNT
+
+        # --- Calculations ---
+        # 1. Debye Length (d_EDL)
+        d_EDL = np.sqrt((epsilon_r * epsilon_0 * k * T) / (2 * (z * e)**2 * Na * C0))
+
+        # 2. Double-layer capacitance (C_EDL)
+        term = np.sqrt(2 * (z * e)**2 * Na * C0 * epsilon_r * epsilon_0 / (k * T))
+        cosh_term = np.cosh((z * e * V_zeta) / (2 * k * T))
+        C_EDL = A_CNT * term * cosh_term  # Total capacitance (F)
+
+        # 3. Simplified parallel-plate C_EDL (for verification)
+        C_EDL_simple = (epsilon_r * epsilon_0 * A_CNT) / d_EDL
+
+        # 4. Impedance (Z)
+        denominator = 2 * np.pi * freq * C_EDL
+        if denominator == 0:
+            return jsonify({"error": "Division by zero: Impedance calculation failed. Check input parameters."}), 400
+        Z = 1 / denominator        
+        if Z == 0:
+            return jsonify({"error": "Division by zero: Current calculation failed. Check input parameters."}), 400
+        
+        # 5. Current (i)
+        i = V_zeta / Z
+
+        return jsonify({
+            "Debye Length (d_EDL) (m)": f"{d_EDL:.2e}",
+            "C_EDL (Full Eq.) (F)": f"{C_EDL:.2e}",
+            "C_EDL (Parallel-Plate) (F)": f"{C_EDL_simple:.2e}",
+            "Impedance (Z) (Ω)": f"{Z:.2e}",
+            "Current (i) (A)": f"{i:.2e}"
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
 if __name__ == "__main__":
     app.run(debug=True)

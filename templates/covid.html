@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Covid Detection</title>
+
+  <style>
+    body         { font-family: Arial, sans-serif; margin: 20px; }
+    .input-field { margin-bottom: 10px; }
+    label        { display:inline-block; width:250px; }
+    input        { width:200px; }
+    button       { padding:5px 10px; }
+    .result      { margin-top:20px; }
+
+    nav          { margin-top:30px; background:#f2f2f2; padding:10px 14px;
+                   border-radius:8px; }
+    nav a        { margin-right:18px; color:#333; text-decoration:none;
+                   font-weight:bold; }
+    nav a:hover  { text-decoration:underline; }
+  </style>
+
+  <!-- Axios for AJAX -->
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+  <h1>Covid Detection</h1>
+
+  <!-- inputs -->
+  <div class="input-field">
+    <label for="epsilon_r">Relative Permittivity (εr):</label>
+    <input type="number" id="epsilon_r" value="78.49" step="0.01">
+  </div>
+  <div class="input-field">
+    <label for="z">Ion Valence (z):</label>
+    <input type="number" id="z" value="1" step="1">
+  </div>
+  <div class="input-field">
+    <label for="V_zeta">Zeta Potential (V):</label>
+    <input type="number" id="V_zeta" value="0.05" step="0.01">
+  </div>
+  <div class="input-field">
+    <label for="C0">Bulk Concentration (mol/m³):</label>
+    <input type="number" id="C0" value="0.001" step="0.0001">
+  </div>
+  <div class="input-field">
+    <label for="freq">Frequency (Hz):</label>
+    <input type="number" id="freq" value="100000" step="1000">
+  </div>
+  <div class="input-field">
+    <label for="r_CNT">CNT Radius (m):</label>
+    <input type="number" id="r_CNT" value="5e-9" step="1e-10">
+  </div>
+  <div class="input-field">
+    <label for="h_CNT">CNT Height (m):</label>
+    <input type="number" id="h_CNT" value="1e-4" step="1e-6">
+  </div>
+
+  <button id="calcBtn">Calculate</button>
+
+  <!-- results -->
+  <div id="result" class="result"></div>
+
+  <script>
+    document.getElementById('calcBtn').addEventListener('click', async () => {
+      const payload = {
+        epsilon_r: parseFloat(document.getElementById('epsilon_r').value),
+        z: parseFloat(document.getElementById('z').value),
+        V_zeta: parseFloat(document.getElementById('V_zeta').value),
+        C0: parseFloat(document.getElementById('C0').value),
+        freq: parseFloat(document.getElementById('freq').value),
+        r_CNT: parseFloat(document.getElementById('r_CNT').value),
+        h_CNT: parseFloat(document.getElementById('h_CNT').value)
+      };
+
+      try {
+        const res = await axios.post('/calculate_covid', payload);
+        const d = res.data;
+        document.getElementById('result').innerHTML = `
+          <h2>Results</h2>
+          <ul>
+            <li><strong>Debye Length (d_EDL):</strong> ${d["Debye Length (d_EDL) (m)"]} m</li>
+            <li><strong>C_EDL (Full Eq.):</strong> ${d["C_EDL (Full Eq.) (F)"]} F</li>
+            <li><strong>C_EDL (Parallel-Plate):</strong> ${d["C_EDL (Parallel-Plate) (F)"]} F</li>
+            <li><strong>Impedance (Z):</strong> ${d["Impedance (Z) (Ω)"]} Ω</li>
+            <li><strong>Current (i):</strong> ${d["Current (i) (A)"]} A</li>
+          </ul>`;
+      } catch (err) {
+        document.getElementById('result').innerHTML =
+          `<p style="color:red;">Error: ${
+              err.response ? err.response.data.error : err.message
+          }</p>`;
+      }
+    });
+  </script>
+
+  <!-- nav bar -->
+  <nav>
+    <a href="/">Sheet 3 – CNT Capacitor</a>
+    <a href="/sheet1">Sheet 1 – RC Calc</a>
+    <a href="/vo_rf">Vo & Rf Explorer</a>
+    <a href="/vx">Vx(t) Graph</a>
+    <a href="/covid">Covid Detection</a>
+  </nav>
+</body>
+</html> 
