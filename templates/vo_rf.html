@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Vo &amp; Rf Explorer</title>
+<title>Vo &amp; Rf Explorer</title>
 <style>
   body         { font-family: Arial, sans-serif; margin: 20px; }
   .input-field { margin-bottom: 10px; }
@@ -20,7 +20,7 @@
 </head>
 <body>
 
-<h1>Value of Vo &amp; Rf</h1>
+<h1>Value of Vo &amp; Rf</h1>
 
 <!-- ── inputs ── -->
 <div class="input-field"><label>f (Hz):</label>     <input id="f"    type="number" step="any" value="0.25"></div>
@@ -57,16 +57,16 @@ document.getElementById('calc').onclick = async () => {
       <h2>Vo results</h2>
       <ul>
         <li><b>Down‑slope&nbsp;(−):</b>  
-            Vwork = ${d.down.Vwork} V, i = ${d.down.i},  
-            <span style="color:#00;">Vo = ${d.down.Vo}</span></li>
+            Vwork = ${d.down.Vwork} V, i = ${d.down.i},  
+            <span style="color:#00;">Vo = ${d.down.Vo}</span></li>
         <li><b>Up‑slope&nbsp;(＋):</b>    
-            Vwork = ${d.up.Vwork} V, i = ${d.up.i},  
-            Vo = ${d.up.Vo}</li>
+            Vwork = ${d.up.Vwork} V, i = ${d.up.i},  
+            Vo = ${d.up.Vo}</li>
       </ul>`;
     document.getElementById('out').innerHTML = html;
   } catch (e) {
     document.getElementById('out').innerHTML =
-      `<p style="color:red;">Error – ${e.response ? e.response.data.error
+      `<p style="color:red;">Error – ${e.response ? e.response.data.error
                                                : e.message}</p>`;
   }
 };
@@ -74,11 +74,13 @@ document.getElementById('calc').onclick = async () => {
 
 <!-- nav bar -->
 <nav>
-  <a href="/">Sheet 3 – CNT Capacitor</a>
-  <a href="/sheet1">Sheet 1 – RC Calc</a>
-  <a href="/vo_rf">Vo & Rf Explorer</a>
+  <a href="/">Sheet 3 – CNT Capacitor</a>
+  <a href="/sheet1">Sheet 1 – RC Calc</a>
+  <a href="/vo_rf">Vo & Rf Explorer</a>
   <a href="/vx">Vx(t) Graph</a>
   <a href="/covid">Covid Detection</a>
+  <a href="/biosensing">Theoretical Simulation</a>
+  <a href="/bio_project">Project Management</a>
 </nav>
 </body>
 </html>
