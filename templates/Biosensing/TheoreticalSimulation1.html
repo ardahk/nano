@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Biosensing Theoretical Simulation</title>
+    <meta charset="UTF-8">
+    <title>Biosensing Theoretical Simulation</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<style>
+    <style>
  body{font-family:Arial,Helvetica,sans-serif;margin:0;padding:0}
  h1{text-align:center;color:teal;margin:30px 0}
  h2,h3{color:teal;margin:0 0 14px}
@@ -28,43 +28,53 @@
  nav{margin-top:30px;background:#f2f2f2;padding:10px 14px;border-radius:8px;text-align:center}
  nav a{margin-right:18px;color:#333;text-decoration:none;font-weight:bold}
  nav a:hover{text-decoration:underline}
-</style>
+    </style>
 </head>
 <body>
-<div class="container">
- <h1>Biosensing Theoretical Simulation</h1>
+    <nav>
+        <a href="/">Sheet 3 – CNT Capacitor</a>
+        <a href="/sheet1">Sheet 1 – RC Calc</a>
+        <a href="/vo_rf">Vo & Rf Explorer</a>
+        <a href="/vx">Vx(t) Graph</a>
+        <a href="/covid">Covid Detection</a>
+        <a href="/biosensing">Theoretical Simulation</a>
+        <a href="/bio_project">Project Management</a>
+        <a href="/ebeam">E-Beam Simulator</a>
+    </nav>
+    <div class="container">
+        <h1>Biosensing Theoretical Simulation</h1>
 
  <!-- ══ Nanostructure ══ -->
- <div class="section">
-  <div class="table-container">
+        <div class="section">
+            <div class="table-container">
    <h2>Parameter Entry</h2><h3>Nanostructure Parameters</h3>
-   <table>
-    <tr><th>Parameter</th><th>Value</th><th>Unit</th></tr>
+                <table>
+                    <tr><th>Parameter</th><th>Value</th><th>Unit</th></tr>
     <tr><td>Radius of CNT (r)</td>   <td><input id="cnt_radius" class="parameter-input" data-highlight="highlight-radius" type="number" step="any" value="{{ defaults.cnt_radius }}"></td><td>m</td></tr>
     <tr><td>Height of CNT (h)</td>   <td><input id="cnt_height" class="parameter-input" data-highlight="highlight-height" type="number" step="any" value="{{ defaults.cnt_height }}"></td><td>m</td></tr>
     <tr><td>Width of Base (w)</td>   <td><input id="base_width" class="parameter-input" data-highlight="highlight-width" type="number" step="any" value="{{ defaults.base_width }}"></td><td>m</td></tr>
     <tr><td>Gap Between CNTs (d)</td><td><input id="cnt_gap" class="parameter-input" data-highlight="highlight-gap" type="number" step="any" value="{{ defaults.cnt_gap }}"></td><td>m</td></tr>
     <tr><td>Length of Base (L)</td>  <td><input id="base_length" class="parameter-input" data-highlight="highlight-length" type="number" step="any" value="{{ defaults.base_length }}"></td><td>m</td></tr>
     <tr><td>Thickness of Base (T)</td><td><input id="base_thickness" class="parameter-input" data-highlight="highlight-thick" type="number" step="any" value="{{ defaults.base_thickness }}"></td><td>m</td></tr>
-   </table>
-  </div>
-  <div class="image-container">
+                </table>
+            </div>
+            <div class="image-container">
    <img src="{{ url_for('static',filename='images/CNTimage.png') }}" alt="CNT sketch">
-   <div id="highlight-radius" class="highlight" style="top: 17%; left: 11%; width: 6%; height: 6%;"></div>
-   <div id="highlight-height" class="highlight" style="top: 23%; left: 20%; width: 5%; height: 45%;"></div>
-   <div id="highlight-width" class="highlight" style="top: 75%; left: 40%; width: 23%; height: 10%; transform: rotate(10deg); transform-origin: center;"></div>
-   <div id="highlight-gap" class="highlight" style="top: 63%; left: 46%; width: 5%; height: 5%; transform: rotate(10deg); transform-origin: center;"></div>
-   <div id="highlight-length" class="highlight" style="top: 65%; left: 63%; width: 27%; height: 10%; transform: rotate(153deg); transform-origin: center;"></div>
-   <div id="highlight-thick" class="highlight" style="top: 45%; left: 87%; width: 4%; height: 8%;"></div>
-  </div>
- </div>
+                <div id="highlight-radius" class="highlight" style="top: 17%; left: 11%; width: 6%; height: 6%;"></div>
+                <div id="highlight-height" class="highlight" style="top: 23%; left: 20%; width: 5%; height: 45%;"></div>
+                <div id="highlight-width" class="highlight" style="top: 75%; left: 40%; width: 23%; height: 10%; transform: rotate(10deg); transform-origin: center;"></div>
+                <div id="highlight-gap" class="highlight" style="top: 63%; left: 46%; width: 5%; height: 5%; transform: rotate(10deg); transform-origin: center;"></div>
+                <div id="highlight-length" class="highlight" style="top: 65%; left: 63%; width: 27%; height: 10%; transform: rotate(153deg); transform-origin: center;"></div>
+                <div id="highlight-thick" class="highlight" style="top: 45%; left: 87%; width: 4%; height: 8%;"></div>
+            </div>
+        </div>
 
  <!-- ══ Materials stack ══ -->
- <div class="section">
-  <div class="table-container">
-   <h3>Materials Stack Parameters</h3>
-   <table>
-    <tr><th>Parameter</th><th>Value</th><th>Unit</th></tr>
+        <div class="section">
+            <div class="table-container">
+                <h3>Materials Stack Parameters</h3>
+                <table>
+                    <tr><th>Parameter</th><th>Value</th><th>Unit</th></tr>
     <tr><td>Silicon Thickness</td>   <td><input id="t_si" class="parameter-input" data-highlight="highlight-Sithick" type="number" step="any" value="{{ defaults.t_si }}"></td><td>m</td></tr>
     <tr><td>SiO₂ Thickness</td>      <td><input id="t_sio2_1" class="parameter-input" data-highlight="highlight-SiO2thick" type="number" step="any" value="{{ defaults.t_sio2_1 }}"></td><td>m</td></tr>
     <tr><td>SiO₂ Thickness 2</td>    <td><input id="t_sio2_2" class="parameter-input" data-highlight="highlight-SiO2thick2" type="number" step="any" value="{{ defaults.t_sio2_2 }}"></td><td>m</td></tr>
@@ -72,43 +82,43 @@
     <tr><td>Alumina Thickness</td>   <td><input id="t_al2o3" class="parameter-input" data-highlight="highlight-Althick1" type="number" step="any" value="{{ defaults.t_al2o3 }}"></td><td>m</td></tr>
     <tr><td>Aluminum Thickness</td>  <td><input id="t_al" class="parameter-input" data-highlight="highlight-Althick2" type="number" step="any" value="{{ defaults.t_al }}"></td><td>m</td></tr>
     <tr><td>Iron Thickness</td>      <td><input id="t_fe" class="parameter-input" data-highlight="highlight-Fethick" type="number" step="any" value="{{ defaults.t_fe }}"></td><td>m</td></tr>
-   </table>
-  </div>
-  <div class="image-container">
+                </table>
+            </div>
+            <div class="image-container">
    <img src="{{ url_for('static',filename='images/dielecimage.png') }}" alt="Stack sketch">
-   <div id="highlight-Sithick" class="highlight" style="top: 60%; left: 88%; width: 6%; height: 10%;"></div>
-   <div id="highlight-SiO2thick" class="highlight" style="top: 55%; left: 88%; width: 6%; height: 6%;"></div>
-   <div id="highlight-SiO2thick2" class="highlight" style="top: 45%; left: 88%; width: 6%; height: 6%;"></div>
-   <div id="highlight-Tithick" class="highlight" style="top: 26%; left: 88%; width: 6%; height: 4%;"></div>
-   <div id="highlight-Althick1" class="highlight" style="top: 50%; left: 88%; width: 6%; height: 6%;"></div>
-   <div id="highlight-Althick2" class="highlight" style="top: 43%; left: 88%; width: 6%; height: 3%;"></div>
-   <div id="highlight-Fethick" class="highlight" style="top: 39%; left: 88%; width: 6%; height: 3%;"></div>
-  </div>
- </div>
+                <div id="highlight-Sithick" class="highlight" style="top: 60%; left: 88%; width: 6%; height: 10%;"></div>
+                <div id="highlight-SiO2thick" class="highlight" style="top: 55%; left: 88%; width: 6%; height: 6%;"></div>
+                <div id="highlight-SiO2thick2" class="highlight" style="top: 45%; left: 88%; width: 6%; height: 6%;"></div>
+                <div id="highlight-Tithick" class="highlight" style="top: 26%; left: 88%; width: 6%; height: 4%;"></div>
+                <div id="highlight-Althick1" class="highlight" style="top: 50%; left: 88%; width: 6%; height: 6%;"></div>
+                <div id="highlight-Althick2" class="highlight" style="top: 43%; left: 88%; width: 6%; height: 3%;"></div>
+                <div id="highlight-Fethick" class="highlight" style="top: 39%; left: 88%; width: 6%; height: 3%;"></div>
+            </div>
+        </div>
 
  <!-- ══ Functionalization ══ -->
- <div class="section">
-  <div class="table-container">
+        <div class="section">
+            <div class="table-container">
    <h3>Functionalization &amp; Analyte</h3>
-   <table>
-    <tr><th>Parameter</th><th>Value</th><th>Unit</th></tr>
+                <table>
+                    <tr><th>Parameter</th><th>Value</th><th>Unit</th></tr>
     <tr><td>Radius of Molecule</td>    <td><input id="mol_radius" type="number" step="any" value="{{ defaults.mol_radius }}"></td><td>m</td></tr>
     <tr><td>Length of Molecule</td>    <td><input id="mol_length" type="number" step="any" value="{{ defaults.mol_length }}"></td><td>m</td></tr>
     <tr><td>Gap Between Molecules</td> <td><input id="mol_gap"    type="number" step="any" value="{{ defaults.mol_gap }}"></td><td>m</td></tr>
     <tr><td>Dielectric of Molecule</td><td><input id="er_mol"     type="number" step="any" value="{{ defaults.er_mol }}"></td><td>–</td></tr>
-   </table>
-  </div>
-  <div class="image-container">
+                </table>
+            </div>
+            <div class="image-container">
    <img src="{{ url_for('static',filename='images/funcimage.png') }}" alt="DNA sketch">
-  </div>
- </div>
+            </div>
+        </div>
 
  <!-- ══ Dielectric ══ -->
- <div class="section">
-  <div class="table-container">
-   <h3>Dielectric</h3>
-   <table>
-    <tr><th>Parameter</th><th>Value</th><th>Unit</th></tr>
+        <div class="section">
+            <div class="table-container">
+                <h3>Dielectric</h3>
+                <table>
+                    <tr><th>Parameter</th><th>Value</th><th>Unit</th></tr>
     <tr><td>Energy Density</td>         <td><input id="energy_density" type="number" step="any" value="{{ defaults.energy_density }}"></td><td>–</td></tr>
     <tr><td>Bulk Concentration (M)</td> <td><input id="conc_molar"     type="number" step="any" value="{{ defaults.conc_molar }}"></td><td>M</td></tr>
     <tr><td>Relative Permittivity</td>  <td><input id="er_solvent"     type="number" step="any" value="{{ defaults.er_solvent }}"></td><td>–</td></tr>
@@ -122,19 +132,19 @@
     <tr><td>Zeta Potential</td>         <td><input id="zeta_potential" type="number" step="any" value="{{ defaults.zeta_potential }}"></td><td>V</td></tr>
     <tr><td>Concentration Std. State</td><td><input id="concentration_standard" type="number" step="any" value="{{ defaults.concentration_standard }}"></td><td>–</td></tr>
     <tr><td>Change of Ion Species</td>   <td><input id="ion_species_change"     type="number" step="any" value="{{ defaults.ion_species_change }}"></td><td>–</td></tr>
-   </table>
-  </div>
-  <div class="image-container">
+                </table>
+            </div>
+            <div class="image-container">
    <img src="{{ url_for('static',filename='images/matstaximage.png') }}" alt="Dielectric sketch">
-  </div>
- </div>
+            </div>
+        </div>
 
  <!-- ══ Circuit placeholders (unchanged) ══ -->
- <div class="section">
-  <div class="table-container">
-   <h3>Circuit</h3>
-   <table>
-    <tr><th>Parameter</th><th>Value</th><th>Unit</th></tr>
+        <div class="section">
+            <div class="table-container">
+                <h3>Circuit</h3>
+                <table>
+                    <tr><th>Parameter</th><th>Value</th><th>Unit</th></tr>
     {% for fid,label,unit in [
         ('charging_current','Charging Current','A'),
         ('charging_voltage','Charging Voltage','V'),
@@ -148,24 +158,24 @@
         ('lithography_time','Lithography Time','s')] %}
       <tr><td>{{ label }}</td><td><input id="{{ fid }}" type="number" step="any" value="{{ defaults[fid] }}"></td><td>{{ unit }}</td></tr>
     {% endfor %}
-   </table>
-  </div>
-  <div class="image-container">
+                </table>
+            </div>
+            <div class="image-container">
    <img src="{{ url_for('static',filename='images/circuitimage.png') }}" alt="Circuit diagram">
-  </div>
- </div>
+            </div>
+        </div>
 
  <!-- ══ Motor selector (UI only) ══ -->
  <div style="text-align:center">
-  <h3>Motor Select + Liquid Dispense</h3>
+                <h3>Motor Select + Liquid Dispense</h3>
   <label><input type="checkbox"> Motor 1</label>
   <label><input type="checkbox"> Motor 2</label>
   <label><input type="checkbox"> Motor 3</label>
   <div style="margin-top:6px">
    Dispensed Liquid: <input type="number" style="width:60px"> mL
-  </div>
-  <button class="run-simulation-btn">Run Simulation</button>
- </div>
+                </div>
+                <button class="run-simulation-btn">Run Simulation</button>
+            </div>
 
  <!-- ══ Results ══ -->
  <div id="results">
@@ -183,29 +193,29 @@
     <tr><td>ΔZ = Z₁ − Z₂ (Ω)</td><td colspan="2" id="dz"></td></tr>
    </tbody>
   </table>
- </div>
-</div>
+        </div>
+    </div>
 
 <!-- ══ JS: highlight boxes ══ -->
-<script>
+    <script>
 document.querySelectorAll('.parameter-input').forEach(input => {
-  input.addEventListener('focus', () => {
-    const highlightId = input.dataset.highlight;
-    const highlightElement = document.getElementById(highlightId);
-    if (highlightElement) {
-      highlightElement.style.display = 'block';
-    }
-  });
+            input.addEventListener('focus', () => {
+                const highlightId = input.dataset.highlight;
+                const highlightElement = document.getElementById(highlightId);
+                if (highlightElement) {
+                    highlightElement.style.display = 'block';
+                }
+            });
 
-  input.addEventListener('blur', () => {
-    const highlightId = input.dataset.highlight;
-    const highlightElement = document.getElementById(highlightId);
-    if (highlightElement) {
-      highlightElement.style.display = 'none';
-    }
-  });
-});
-</script>
+            input.addEventListener('blur', () => {
+                const highlightId = input.dataset.highlight;
+                const highlightElement = document.getElementById(highlightId);
+                if (highlightElement) {
+                    highlightElement.style.display = 'none';
+                }
+            });
+        });
+    </script>
 
 <!-- ══ JS: run simulation & fill results ══ -->
 <script>
@@ -232,18 +242,5 @@ document.querySelector('.run-simulation-btn').addEventListener('click', async ()
   document.getElementById('results').style.display='block';
 });
 </script>
-
-<!-- Navigation Bar -->
-<div style="margin: 40px 20px;">
-  <nav style="background:#f2f2f2; padding:15px; border-radius:8px; text-align:center;">
-    <a href="/" style="margin:0 15px; color:#333; text-decoration:none; font-weight:bold;">Sheet 3 – CNT Capacitor</a>
-    <a href="/sheet1" style="margin:0 15px; color:#333; text-decoration:none; font-weight:bold;">Sheet 1 – RC Calc</a>
-    <a href="/vo_rf" style="margin:0 15px; color:#333; text-decoration:none; font-weight:bold;">Vo & Rf Explorer</a>
-    <a href="/vx" style="margin:0 15px; color:#333; text-decoration:none; font-weight:bold;">Vx(t) Graph</a>
-    <a href="/covid" style="margin:0 15px; color:#333; text-decoration:none; font-weight:bold;">COVID Detection</a>
-    <a href="/biosensing" style="margin:0 15px; color:#333; text-decoration:none; font-weight:bold;">Theoretical Simulation</a>
-    <a href="/bio_project" style="margin:0 15px; color:#333; text-decoration:none; font-weight:bold;">Project Management</a>
-  </nav>
-</div>
 </body>
 </html>

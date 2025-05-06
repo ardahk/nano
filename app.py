@@ -3,8 +3,26 @@ from flask import Flask, render_template, request, jsonify
 import math
 import scipy.constants
 import numpy as np
+from flask_cors import CORS
+import pandas as pd
+import json
+import traceback
+
+# Import the ebeam model
+try:
+    from model import ElectronBeamLithographySimulator, image_to_mask, create_2d_gaussian, create_base64_plot
+    ebeam_available = True
+except ImportError:
+    ebeam_available = False
+    print("EBeam model import failed. EBeam functionality will be disabled.")
 
 app = Flask(__name__)
+CORS(app)
+
+# Initialize ebeam model if available
+if ebeam_available:
+    ebeam_model = ElectronBeamLithographySimulator()
+    ebeam_display = False
 
 # ── physical constants (rows 4-12 of the sheet) ─────────────────────────
 E, kB, Na = 1.602e-19, 1.380e-23, 6.022e23
@@ -465,6 +483,11 @@ def calculate_covid():
         "ΔC (F)":                f"{delta_C:.3e}",
     })
 
+@app.route("/simulate", methods=["POST"])
+def run_simulation():
+    """Process the simulation for the biosensing page (from app1.py)"""
+    return jsonify(simulate(request.get_json(force=True)))
+
 @app.route("/biosensing")
 def biosensing():
     """Show the biosensing theoretical simulation page"""
@@ -474,10 +497,40 @@ def biosensing():
         app.logger.error(f"Error rendering template: {str(e)}")
         return str(e), 500
 
-@app.route("/simulate", methods=["POST"])
-def run_simulation():
-    """Process the simulation for the biosensing page (from app1.py)"""
-    return jsonify(simulate(request.get_json(force=True)))
+@app.route('/run_ebeam_simulation', methods=['POST'])
+def run_ebeam_simulation():
+    """Process the ebeam simulation and return results as a CSV file"""
+    if not ebeam_available:
+        return jsonify({"status": "error", "error": "EBeam functionality is not available"}), 500
+        
+    try:
+        # Get the mask data from the request
+        data = request.get_json()
+        mask = data.get('mask', None)
+        if mask is None:
+            return jsonify({"status": "error", "error": "No mask data provided"}), 400
+            
+        # Run the simulation using the ebeam model
+        print("Running ebeam simulation...")
+        json_result = ebeam_model.run_lithography(mask=mask, display=ebeam_display)
+        
+        # Extract the dataframe - EXACTLY as in the original code
+        df_json = json_result.get("df_json")
+        df_json = json.loads(df_json)
+        df = pd.DataFrame(data=df_json["data"], columns=df_json["columns"], index=df_json["index"])
+        print(df)
+        csv_data = df.to_csv(index=False)
+        
+        # Return success with CSV data - EXACTLY as in the original code
+        return jsonify(
+            status="success",
+            csv_data=csv_data
+        )
+    except Exception as e:
+        print(f"Error in ebeam simulation: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"status": "error", "error": f"Simulation error: {str(e)}"}), 500
 
 @app.route("/calculate_biosensing", methods=["POST"])
 def calculate_biosensing():
@@ -538,5 +591,50 @@ def bio_project():
     context = add_navigation_context()
     return render_template("Biosensing/BioProjectManagment.html", **context)
 
+# ---- EBeam Integration ----
+@app.route('/ebeam')
+def ebeam():
+    return render_template("ebeam/index.html")
+
+@app.route('/update_params', methods=['POST'])
+def update_params():
+    """
+    This updates the parameter of the underlying model to avoid re-initialization.
+    """
+    if not ebeam_available:
+        return jsonify({"error": "EBeam functionality is not available"}), 500
+        
+    global ebeam_display
+
+    # Log original parameters
+    print("\n=== Prev Model Parameters ===")
+    print(f"Wafer Dimensions: {ebeam_model.wafer_dim}")
+    print(f"CNT Grid Shape: {ebeam_model.cnt_grid_shape}")
+    print(f"CNT Unit Dimensions: {ebeam_model.cnt_unit_dim}")
+    print(f"Display: {ebeam_display}")
+
+    # extract the data parameters parameters
+    data = request.get_json()
+    params = data.get('params', {})
+    wafer_dim = tuple(params.get('wafer_dim', ebeam_model.wafer_dim))
+    cnt_grid_shape = tuple(params.get('cnt_grid_shape', ebeam_model.cnt_grid_shape))
+    cnt_unit_dim = tuple(params.get('cnt_unit_dim', ebeam_model.cnt_unit_dim))
+
+    # update display
+    ebeam_display = bool(params['display'])
+
+    # update model
+    ebeam_model.update_parameters(wafer_dim, cnt_grid_shape, cnt_unit_dim)
+
+    # Log updated parameters
+    print("\n=== Updated Model Parameters ===")
+    print(f"Wafer Dimensions: {ebeam_model.wafer_dim}")
+    print(f"CNT Grid Shape: {ebeam_model.cnt_grid_shape}")
+    print(f"CNT Unit Dimensions: {ebeam_model.cnt_unit_dim}")
+    print(f"Display: {ebeam_display}")
+
+    # return success
+    return jsonify(status="success")
+
 if __name__ == "__main__":
-    app.run(debug=True, host='0.0.0.0', port=5002)
+    app.run(debug=True, host='0.0.0.0', port=5003)

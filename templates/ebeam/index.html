@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Electron Beam Lithography Simulator</title>
+  <link rel="stylesheet" href="/static/ebeam_gui/static/css/main.e6c13ad2.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    #root {
+      margin: 0 auto;
+      max-width: 1200px;
+      padding: 20px;
+    }
+    .nav-container {
+      margin: 40px 20px;
+    }
+    nav {
+      background: #f2f2f2;
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    nav a {
+      margin: 0 15px;
+      color: #333;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    nav a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <div class="nav-container">
+    <nav>
+      <a href="/">Sheet 3 – CNT Capacitor</a>
+      <a href="/sheet1">Sheet 1 – RC Calc</a>
+      <a href="/vo_rf">Vo & Rf Explorer</a>
+      <a href="/vx">Vx(t) Graph</a>
+      <a href="/covid">COVID Detection</a>
+      <a href="/biosensing">Theoretical Simulation</a>
+      <a href="/bio_project">Project Management</a>
+      <a href="/ebeam">E-Beam Simulator</a>
+    </nav>
+  </div>
+
+  <div id="root"></div>
+  
+  <!-- React scripts -->
+  <script>
+    // Adjust the API endpoint to match our Flask route
+    // window.API_URL = window.location.origin; // No longer needed as paths are relative
+    // window.RUN_SIMULATION_ENDPOINT = '/run_ebeam_simulation'; // No longer needed
+  </script>
+  <script src="/static/ebeam_gui/static/js/453.8ab44547.chunk.js"></script>
+  <script src="/static/ebeam_gui/static/js/main.3a11f966.js"></script>
+</body>
+</html> 
