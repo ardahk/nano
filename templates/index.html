@@ -20,15 +20,11 @@
 </head>
 <body>
   <nav>
-    <a href="/">Sheet 3 – CNT Capacitor</a>
-    <a href="/sheet1">Sheet 1 – RC Calc</a>
-    <a href="/vo_rf">Vo & Rf Explorer</a>
-    <a href="/vx">Vx(t) Graph</a>
-    <a href="/covid">Covid Detection</a>
-    <a href="/biosensing">Theoretical Simulation</a>
-    <a href="/bio_project">Project Management</a>
-    <a href="/ebeam">E-Beam Simulator</a>
+    {% for link in nav_links %}
+    <a href="{{ link.url }}">{{ link.text }}</a>
+    {% endfor %}
   </nav>
+
   <h1>CNT Calculator</h1>
   <div>
     <div class="input-field">
