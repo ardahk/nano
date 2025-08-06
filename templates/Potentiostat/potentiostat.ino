@@ -1,0 +1,176 @@
+//Part of the serial interpreter portion of this code is from https://gist.github.com/edgar-bonet/607b387260388be77e96
+#include <Arduino.h>
+#include <avr/pgmspace.h>
+// #define USBSERIAL Serial
+#define BUF_LENGTH 128  /* Buffer for the incoming command. */
+
+static bool do_echo = false;
+// Constants
+const int analogPins[] = {A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17};
+const int numPins = 18;
+const int bufferSize = numPins * 2; // Each reading is 2 bytes
+
+const int pwmPinOut = 12;
+uint32_t PWM_Pins[] = { 4, 5, 6, 7, 0, 1, 2, 3, 8, 9, 10, 11, 28, 29, 36, 37, 13, 33 };
+float dutyCycle[]   = { 50.0f, 50.0f, 50.0f, 50.0f, 50.0f, 50.0f, 50.0f, 50.0f, 50.0f, 50.0f, 50.0f, 50.0f, 50.0f, 50.0f, 50.0f, 50.0f,50.0f,50.0f };  
+float frequency = 2000.0f;  // Same frequency for all channels
+#define NUM_OF_PINS       ( sizeof(PWM_Pins) / sizeof(uint32_t) )
+// const int sampleInterval=1000000/(F*N);
+
+int F=100;//Frequency
+int Fs = 300;//Sample Rate
+int N=(int)(Fs/F);//Num Samples
+int sampleRate =10000; // 10kHz
+
+uint8_t buffer1[2000][bufferSize];
+volatile bool bufferReady = false;
+volatile int bufferHead=0;
+volatile int bufferTail=2;
+volatile int bufferIndex = 0;
+volatile uint16_t samples[1000];
+
+// Timer interrupt to read analog values
+IntervalTimer sampleTimer;
+IntervalTimer outTimer;
+uint16_t counter=0;
+void sampleData() {
+  for (int i = 0; i < numPins; i++) {
+    int sensorValue = analogRead(analogPins[i]);
+    buffer1[bufferTail][bufferIndex++] = sensorValue & 0xFF; // Lower byte
+    buffer1[bufferTail][bufferIndex++] = sensorValue>>8; // Upper byte
+  }
+
+  counter+=1;
+  bufferIndex=0;
+  bufferTail++;
+  if(bufferTail>=2000){
+    bufferTail=0;
+  }
+
+}
+
+void configurePWM(){
+  for (uint8_t i = 0; i < NUM_OF_PINS; i++) {
+    // Set the frequency for each pin
+    analogWriteFrequency(PWM_Pins[i], frequency);
+    // Set the duty cycle (value between 0 and 255)
+    analogWrite(PWM_Pins[i], (uint8_t)(dutyCycle[i] / 100.0f * 255));
+  }
+}
+void setSampleRate(int samplerate){
+  sampleRate=samplerate;
+  sampleTimer.update(1000000 / sampleRate);
+}
+static void exec(char *cmdline)
+{
+    char *command = strsep(&cmdline, " ");
+
+    if (strcmp_P(command, PSTR("help")) == 0) {
+        SerialUSB1 .println(F(
+            "mode <pin> <mode>: pinMode()\r\n"
+            "read <pin>: digitalRead()\r\n"
+            "aread <pin>: analogRead()\r\n"
+            "write <pin> <value>: digitalWrite()\r\n"
+            "awrite <pin> <value>: analogWrite()\r\n"
+            "pwm <frequency> <samplerate(>=2*frequency  <1000*frequency)> : setPWM()\r\n"
+            "readrate <samplerate>: setSampleRate()\r\n"
+            "echo <value>: set echo off (0) or on (1)"));
+    } else if (strcmp_P(command, PSTR("mode")) == 0) {
+        int pin = atoi(strsep(&cmdline, " "));
+        int mode = atoi(cmdline);
+        pinMode(pin, mode);
+    } else if (strcmp_P(command, PSTR("read")) == 0) {
+        int pin = atoi(cmdline);
+        SerialUSB1 .println(digitalRead(pin));
+    } else if (strcmp_P(command, PSTR("aread")) == 0) {
+        int pin = atoi(cmdline);
+        SerialUSB1 .println(analogRead(pin));
+    } else if (strcmp_P(command, PSTR("write")) == 0) {
+        int pin = atoi(strsep(&cmdline, " "));
+        int value = atoi(cmdline);
+        digitalWrite(pin, value);
+    } else if (strcmp_P(command, PSTR("awrite")) == 0) {
+        int pin = atoi(strsep(&cmdline, " "));
+        int value = atoi(cmdline);
+        analogWrite(pin, value);
+    } else if (strcmp_P(command, PSTR("pwmfreq"))==0){
+        int F = atoi(cmdline);
+        frequency=F;
+    } else if (strcmp_P(command, PSTR("pwmpin"))==0){
+        int pin = atoi(strsep(&cmdline, " "));
+        float duty_val = atof(cmdline);
+        dutyCycle[pin]=duty_val;
+        
+    } else if (strcmp_P(command, PSTR("pwmapply"))==0){
+        configurePWM();
+    } else if (strcmp_P(command, PSTR("readrate")) == 0) {
+        int samplerate = atoi(strsep(&cmdline, " "));
+        setSampleRate(samplerate);
+    } else if (strcmp_P(command, PSTR("echo")) == 0) {
+        do_echo = atoi(cmdline);
+    } else {
+        SerialUSB1 .print(F("Error: Unknown command: "));
+        SerialUSB1 .println(command);
+    }
+}
+void setup() {
+  Serial.begin(115200);
+  SerialUSB1.begin(9600);
+  
+
+  // Initialize the analog pins
+  for (int i = 0; i < numPins; i++) {
+    pinMode(analogPins[i], INPUT);
+  }
+  // Configure the ADC for high speed
+  analogReadResolution(12); // 12-bit resolution
+  analogReadAveraging(1);   // No averaging
+  // analogWriteResolution(12);
+  // Set up the timer interrupt to sample data at the samplerate
+  // outTimer.begin(sendSignal,1000000 / Fs);
+  configurePWM();
+
+  sampleTimer.begin(sampleData, 1000000 / sampleRate);
+
+  delay(2);
+}
+
+
+void loop() {
+  
+  
+  while(bufferHead!=bufferTail){
+
+    Serial.write( buffer1[bufferHead],36);
+    bufferHead++;
+    if(bufferHead>=2000){
+      bufferHead=0;
+    }
+  }
+  while (SerialUSB1.available()) {
+        static char buffer[BUF_LENGTH];
+        static int length = 0;
+
+        int data = SerialUSB1.read();
+        if (data == '\b' || data == '\177') {  // BS and DEL
+            if (length) {
+                length--;
+                
+            }
+        }
+        else if (data == '\r') {
+            if (do_echo) SerialUSB1.write("\r\n");    // output CRLF
+            buffer[length] = '\0';
+            if (length) exec(buffer);
+            length = 0;
+        }
+        else if (length < BUF_LENGTH - 1) {
+            buffer[length++] = data;
+            if (do_echo) SerialUSB1.write(data);
+        }
+    }
+
+}
+ 
+  
+

@@ -124,6 +124,7 @@ def add_navigation_context(context=None):
         {'url': '/vx', 'text': 'VX'},
         {'url': '/covid', 'text': 'COVID Detection'},
         {'url': '/biosensing', 'text': 'Theoretical Simulation'},
+        {'url': '/potentiostat', 'text': 'Potentiostat'},
         {'url': '/bio_project', 'text': 'Project Management'}
     ]
     return context
@@ -496,6 +497,12 @@ def biosensing():
     except Exception as e:
         app.logger.error(f"Error rendering template: {str(e)}")
         return str(e), 500
+
+@app.route("/potentiostat")
+def potentiostat():
+    """show potentiostat page"""
+    context = add_navigation_context()
+    return render_template("Potentiostat/Potentiostat.html", **context)
 
 @app.route('/run_ebeam_simulation', methods=['POST'])
 def run_ebeam_simulation():
